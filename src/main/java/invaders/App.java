@@ -20,7 +20,7 @@ public class App extends Application {
         GameEngine model = new GameEngine("src/main/resources/config.json");
 
         System.out.println(model.getLoadStatus());
-
+        // 600, 800
         GameWindow window = new GameWindow(model, 640, 400);
         window.run();
 

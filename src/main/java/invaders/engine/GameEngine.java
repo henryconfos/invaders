@@ -8,6 +8,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
+import invaders.BunkerStates.RedState;
+import invaders.EnemyAndBunkerBuilders.Bunker;
+import invaders.EnemyAndBunkerBuilders.BunkerBuilder;
 import invaders.EnemyAndBunkerBuilders.Enemy;
 import invaders.EnemyAndBunkerBuilders.EnemyBuilder;
 import invaders.GameObject;
@@ -47,6 +50,7 @@ public class GameEngine {
 	private int wHeight;
 	private int wWidth;
 	private Image eImage = new Image(new File("src/main/resources/enemy.png").toURI().toString(), 100, 100, true, true);
+	private Image bImage = new Image(new File("src/main/resources/bunkerGreen.jpg").toURI().toString(), 100, 100, true, true);
 
 	public GameEngine(String config){
 		// read the config here
@@ -64,12 +68,15 @@ public class GameEngine {
 	public void update(GameWindow gWindow){
 		movePlayer();
 
+		// Check if game config has loaded, then load in elements to the screen!
 		if(!init){
 			if(this.isLoaded){
 				this.init = true;
 				populateEnemys();
+				populateBunkers();
 			}
 		}
+
 		Random random = new Random();
 		tCount++;
 		for(GameObject go: gameobjects){
@@ -188,6 +195,39 @@ public class GameEngine {
 				}
 			}
 
+			// Check if bunker is hit by projectile
+			if (ro instanceof Projectile) {
+				Collider projectileCollider = (Collider) ro;
+				for (Renderable bunkerRo : renderables) {
+					if (bunkerRo instanceof Bunker) {
+						Collider bunkerCollider = (Collider) bunkerRo;
+						if (projectileCollider.isColliding(bunkerCollider)) {
+							System.out.println("Bunker hit by projectile!");
+
+
+							// If red state get rid of bunker:
+							if(((Bunker) bunkerRo).getState() instanceof RedState){
+								for (EntityView view : gWindow.getEntityViews()) {
+									if (view.matchesEntity(bunkerRo)) {
+										view.markForDelete();
+										player.setShooting(false);
+									}
+								}
+							}
+
+							((Bunker) bunkerRo).changeState();
+
+							for (EntityView view : gWindow.getEntityViews()) {
+								if (view.matchesEntity(ro)) {
+									view.markForDelete();
+									player.setShooting(false);
+								}
+							}
+						}
+					}
+				}
+			}
+
 
 		}
 	}
@@ -217,6 +257,25 @@ public class GameEngine {
 			gameobjects.add(enemy);
 		}
 
+	}
+
+	public void populateBunkers(){
+		for(JSONObject e: bunkersList ){
+			JSONObject positionObject = (JSONObject) e.get("position");
+
+			long xPos = (long) positionObject.get("x");
+			long yPos = (long) positionObject.get("y");
+			System.out.println(yPos);
+			JSONObject sizeObject = (JSONObject) e.get("size");
+
+			long xSize = (long) sizeObject.get("x");
+			long ySize = (long) sizeObject.get("y");
+
+			Bunker bunker = new BunkerBuilder().setPosition(new Vector2D(xPos, yPos)).setWidth(xSize).setHeight(ySize).setImage(bImage).build();
+
+			renderables.add(bunker);
+			gameobjects.add(bunker);
+		}
 	}
 	public void leftReleased() {
 		this.left = false;
