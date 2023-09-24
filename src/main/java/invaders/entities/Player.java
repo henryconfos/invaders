@@ -5,6 +5,7 @@ import invaders.PFactory.ProjectileFactory;
 import invaders.PFactory.SlowStraightProjectileFactory;
 import invaders.engine.GameEngine;
 import invaders.logic.Damagable;
+import invaders.physics.Collider;
 import invaders.physics.Moveable;
 import invaders.physics.Vector2D;
 import invaders.rendering.Animator;
@@ -14,7 +15,7 @@ import javafx.scene.image.Image;
 
 import java.io.File;
 
-public class Player implements Moveable, Damagable, Renderable {
+public class Player implements Moveable, Damagable, Renderable, Collider {
 
     private final Vector2D position;
     private final Animator anim = null;
@@ -49,6 +50,10 @@ public class Player implements Moveable, Damagable, Renderable {
     @Override
     public double getHealth() {
         return this.health;
+    }
+
+    public void setHealth(double health) {
+        this.health = health;
     }
 
     @Override

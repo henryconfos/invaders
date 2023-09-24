@@ -173,6 +173,22 @@ public class GameEngine {
 				}
 			}
 
+			// Check if player is hit by projectile.
+			if (ro instanceof Projectile) {
+				Collider projectileCollider = (Collider) ro;
+				if (projectileCollider.isColliding(player)) {
+					System.out.println("Player hit by projectile!");
+					player.setHealth(player.getHealth()-1);
+					System.out.println(player.getHealth());
+					for (EntityView view : gWindow.getEntityViews()) {
+						if (view.matchesEntity(ro)) {
+							view.markForDelete();
+						}
+					}
+				}
+			}
+
+
 		}
 	}
 
