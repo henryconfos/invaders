@@ -158,7 +158,7 @@ public class GameEngine {
 
 
 
-			// Check for collisons with the enemys
+			// Check for projectile with the enemys
 			if (ro instanceof Projectile) {
 				Collider projectileCollider = (Collider) ro;
 				for (Renderable enemyRo : renderables) {
@@ -169,6 +169,12 @@ public class GameEngine {
 								// Get em off my screen!!!!
 								if (view.matchesEntity(enemyRo)) {
 									view.markForDelete();
+									for(Renderable changeRo: renderables){
+										if(changeRo instanceof Enemy){
+											((Enemy) enemyRo).setSpeedMulitpler(((Enemy) enemyRo).getSpeedMulitpler()+0.1);
+											System.out.println(((Enemy) enemyRo).getSpeedMulitpler());
+										}
+									}
 								}
 								if (view.matchesEntity(ro)) {
 									view.markForDelete();
@@ -184,7 +190,6 @@ public class GameEngine {
 			if (ro instanceof Projectile) {
 				Collider projectileCollider = (Collider) ro;
 				if (projectileCollider.isColliding(player)) {
-					System.out.println("Player hit by projectile!");
 					player.setHealth(player.getHealth()-1);
 					System.out.println(player.getHealth());
 					for (EntityView view : gWindow.getEntityViews()) {
@@ -202,7 +207,6 @@ public class GameEngine {
 					if (bunkerRo instanceof Bunker) {
 						Collider bunkerCollider = (Collider) bunkerRo;
 						if (projectileCollider.isColliding(bunkerCollider)) {
-							System.out.println("Bunker hit by projectile!");
 
 
 							// If red state get rid of bunker:
@@ -221,6 +225,23 @@ public class GameEngine {
 								if (view.matchesEntity(ro)) {
 									view.markForDelete();
 									player.setShooting(false);
+								}
+							}
+						}
+					}
+				}
+			}
+
+			// Check if an enemy hits a bunker:
+			if (ro instanceof Enemy) {
+				Collider enemyCollider = (Collider) ro;
+				for (Renderable bunkerRo : renderables) {
+					if (bunkerRo instanceof Bunker) {
+						Collider bunkerCollider = (Collider) bunkerRo;
+						if (enemyCollider.isColliding(bunkerCollider)) {
+							for (EntityView view : gWindow.getEntityViews()) {
+								if (view.matchesEntity(ro)) {
+									view.markForDelete();
 								}
 							}
 						}
@@ -265,7 +286,7 @@ public class GameEngine {
 
 			long xPos = (long) positionObject.get("x");
 			long yPos = (long) positionObject.get("y");
-			System.out.println(yPos);
+
 			JSONObject sizeObject = (JSONObject) e.get("size");
 
 			long xSize = (long) sizeObject.get("x");

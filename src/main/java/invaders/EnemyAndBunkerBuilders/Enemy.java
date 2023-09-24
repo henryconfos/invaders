@@ -19,6 +19,8 @@ public class Enemy implements Moveable, Damagable, Renderable, GameObject, Colli
 
     private int direction = 1;
 
+    private double speedMulitpler = 1;
+
     protected double width;
     protected double height;
 
@@ -56,6 +58,14 @@ public class Enemy implements Moveable, Damagable, Renderable, GameObject, Colli
         position.setY(position.getY() - 1);
     }
 
+    public double getSpeedMulitpler() {
+        return speedMulitpler;
+    }
+
+    public void setSpeedMulitpler(double speedMulitpler) {
+        this.speedMulitpler = speedMulitpler;
+    }
+
     public int getDirection() {
         return direction;
     }
@@ -71,12 +81,12 @@ public class Enemy implements Moveable, Damagable, Renderable, GameObject, Colli
 
     @Override
     public void left() {
-        this.position.setX(this.position.getX() - 0.2);
+        this.position.setX(this.position.getX() - 0.2*speedMulitpler);
     }
 
     @Override
     public void right() {
-        this.position.setX(this.position.getX() + 0.2);
+        this.position.setX(this.position.getX() + 0.2*speedMulitpler);
     }
 
     @Override
