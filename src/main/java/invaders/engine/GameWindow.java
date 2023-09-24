@@ -51,8 +51,12 @@ public class GameWindow {
          timeline.play();
     }
 
+    public List<EntityView> getEntityViews() {
+        return entityViews;
+    }
+
     private void draw(){
-        model.update();
+        model.update(this);
 
         List<Renderable> renderables = model.getRenderables();
         for (Renderable entity : renderables) {

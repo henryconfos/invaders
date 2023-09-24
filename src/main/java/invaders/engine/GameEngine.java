@@ -1,14 +1,14 @@
 package invaders.engine;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import invaders.GameObject;
+import invaders.PFactory.Projectile;
+import invaders.entities.EntityView;
 import invaders.entities.Player;
-import invaders.physics.Moveable;
 import invaders.physics.Vector2D;
 import invaders.rendering.Renderable;
 import org.json.simple.JSONArray;
@@ -47,7 +47,7 @@ public class GameEngine {
 	/**
 	 * Updates the game/simulation
 	 */
-	public void update(){
+	public void update(GameWindow gWindow){
 		movePlayer();
 		for(GameObject go: gameobjects){
 			go.update();
@@ -58,6 +58,7 @@ public class GameEngine {
 			if(!ro.getLayer().equals(Renderable.Layer.FOREGROUND)){
 				continue;
 			}
+
 			if(ro.getPosition().getX() + ro.getWidth() >= 640) {
 				ro.getPosition().setX(639-ro.getWidth());
 			}
@@ -72,6 +73,17 @@ public class GameEngine {
 
 			if(ro.getPosition().getY() <= 0) {
 				ro.getPosition().setY(1);
+			}
+			if (ro instanceof Projectile) {
+				if(ro.getPosition().getY() <= 1.0){
+						for (EntityView view : gWindow.getEntityViews()) {
+							if (view.matchesEntity(ro)) {
+								view.markForDelete();
+								break;
+							}
+						}
+				}
+
 			}
 		}
 	}
@@ -115,7 +127,7 @@ public class GameEngine {
 	}
 
 	public boolean shootPressed(){
-		player.shoot();
+		player.shoot(this);
 		return true;
 	}
 
@@ -127,6 +139,14 @@ public class GameEngine {
 		if(right){
 			player.right();
 		}
+	}
+
+	public void addRenderable(Renderable renderable) {
+		this.renderables.add(renderable);
+	}
+
+	public void addGameObject(GameObject go) {
+		this.gameobjects.add(go);
 	}
 
 	public boolean loadInConfig(String path) {

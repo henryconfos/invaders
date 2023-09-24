@@ -1,5 +1,9 @@
 package invaders.entities;
 
+import invaders.PFactory.Projectile;
+import invaders.PFactory.ProjectileFactory;
+import invaders.PFactory.SlowStraightProjectileFactory;
+import invaders.engine.GameEngine;
 import invaders.logic.Damagable;
 import invaders.physics.Moveable;
 import invaders.physics.Vector2D;
@@ -15,6 +19,9 @@ public class Player implements Moveable, Damagable, Renderable {
     private final Vector2D position;
     private final Animator anim = null;
     private double health = 100;
+    private ProjectileFactory slowProjectileFactory = new SlowStraightProjectileFactory();
+    private ProjectileFactory currentFactory = slowProjectileFactory;
+    private Projectile currentProjectile;
 
     private final double width = 25;
     private final double height = 30;
@@ -60,8 +67,11 @@ public class Player implements Moveable, Damagable, Renderable {
         this.position.setX(this.position.getX() + 1);
     }
 
-    public void shoot(){
-        // todo
+    public void shoot(GameEngine model){
+        Vector2D newPosition = new Vector2D(this.position.getX(), this.position.getY());
+        currentProjectile = currentFactory.createProjectile(newPosition);
+        model.addRenderable(currentProjectile);
+        model.addGameObject(currentProjectile);
     }
 
     @Override
