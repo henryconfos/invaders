@@ -4,7 +4,7 @@ import invaders.physics.Vector2D;
 
 public class SlowStraightProjectileFactory implements ProjectileFactory{
     @Override
-    public Projectile createProjectile(Vector2D position) {
-        return new SlowStraightProjectile(position);
+    public Projectile createProjectile(Vector2D position, int dir) {
+        return new SlowStraightProjectile(position, dir);
     }
 }

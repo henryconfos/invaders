@@ -1,17 +1,21 @@
 package invaders.EnemyAndBunkerBuilders;
 
 import invaders.GameObject;
+import invaders.ShootingStrat.ShootingStrategy;
+import invaders.engine.GameEngine;
 import invaders.logic.Damagable;
+import invaders.physics.Collider;
 import invaders.physics.Moveable;
 import invaders.physics.Vector2D;
 import invaders.rendering.Animator;
 import invaders.rendering.Renderable;
 import javafx.scene.image.Image;
 
-public class Enemy implements Moveable, Damagable, Renderable, GameObject {
+public class Enemy implements Moveable, Damagable, Renderable, GameObject, Collider {
     protected Vector2D position;
     private final Animator anim = null;
     protected double health = 100;
+    private ShootingStrategy shootingStrategy;
 
     private int direction = 1;
 
@@ -37,6 +41,14 @@ public class Enemy implements Moveable, Damagable, Renderable, GameObject {
 
     public String getpType() {
         return pType;
+    }
+    public void setShootingStrategy(ShootingStrategy strategy) {
+        this.shootingStrategy = strategy;
+    }
+    public void shoot(GameEngine gameEngine) {
+        if (shootingStrategy != null) {
+            shootingStrategy.shoot(this, gameEngine);
+        }
     }
 
     @Override

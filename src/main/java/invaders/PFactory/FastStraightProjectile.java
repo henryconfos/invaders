@@ -10,14 +10,16 @@ public class FastStraightProjectile implements Projectile {
     private final Image image;
     private final double width = 10;
     private final double height = 15;
+    private int dir;
 
-    public FastStraightProjectile(Vector2D p){
+    public FastStraightProjectile(Vector2D p, int d){
         this.position = p;
+        this.dir = d;
         this.image = new Image(new File("src/main/resources/player.png").toURI().toString(), width, height, true, true);
     }
     @Override
     public void move() {
-        position.setY(position.getY() - 2);
+        position.setY(position.getY() + dir);
     }
 
     @Override

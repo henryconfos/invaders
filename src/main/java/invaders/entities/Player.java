@@ -19,6 +19,7 @@ public class Player implements Moveable, Damagable, Renderable {
     private final Vector2D position;
     private final Animator anim = null;
     private double health = 100;
+    private boolean isShooting = false;
     private ProjectileFactory slowProjectileFactory = new SlowStraightProjectileFactory();
     private ProjectileFactory currentFactory = slowProjectileFactory;
     private Projectile currentProjectile;
@@ -35,6 +36,14 @@ public class Player implements Moveable, Damagable, Renderable {
     @Override
     public void takeDamage(double amount) {
         this.health -= amount;
+    }
+
+    public boolean isShooting() {
+        return isShooting;
+    }
+
+    public void setShooting(boolean shooting) {
+        isShooting = shooting;
     }
 
     @Override
@@ -68,10 +77,14 @@ public class Player implements Moveable, Damagable, Renderable {
     }
 
     public void shoot(GameEngine model){
-        Vector2D newPosition = new Vector2D(this.position.getX(), this.position.getY());
-        currentProjectile = currentFactory.createProjectile(newPosition);
-        model.addRenderable(currentProjectile);
-        model.addGameObject(currentProjectile);
+        if(!isShooting){
+            Vector2D newPosition = new Vector2D(this.position.getX(), this.position.getY());
+            currentProjectile = currentFactory.createProjectile(newPosition, -1);
+            model.addRenderable(currentProjectile);
+            model.addGameObject(currentProjectile);
+            isShooting = true;
+        }
+
     }
 
     @Override

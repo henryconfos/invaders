@@ -10,14 +10,16 @@ public class SlowStraightProjectile implements Projectile {
     private final Image image;
     private final double width = 10;
     private final double height = 15;
+    private int dir;
 
-    public SlowStraightProjectile(Vector2D p){
+    public SlowStraightProjectile(Vector2D p, int d){
         this.position = p;
+        this.dir = d;
         this.image = new Image(new File("src/main/resources/projectile.png").toURI().toString(), width, height, true, true);
     }
     @Override
     public void move() {
-        position.setY(position.getY() - 1);
+        position.setY(position.getY() + dir);
     }
 
     @Override

@@ -4,14 +4,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 
 import invaders.EnemyAndBunkerBuilders.Enemy;
 import invaders.EnemyAndBunkerBuilders.EnemyBuilder;
 import invaders.GameObject;
 import invaders.PFactory.Projectile;
+import invaders.ShootingStrat.FastProjectileStrategy;
+import invaders.ShootingStrat.SlowProjectileStrategy;
 import invaders.entities.EntityView;
 import invaders.entities.Player;
+import invaders.physics.Collider;
 import invaders.physics.Vector2D;
 import invaders.rendering.Renderable;
 import javafx.scene.image.Image;
@@ -24,7 +29,10 @@ public class GameEngine {
 
 	private List<GameObject> gameobjects;
 	private List<Renderable> renderables;
+	private List<Renderable> newGameRenderable = new ArrayList<>();
+	private List<GameObject> newGameObject = new ArrayList<>();
 	private Player player;
+	private int tCount;
 
 	private ArrayList<JSONObject> gameList = new ArrayList<>();
 	private ArrayList<JSONObject> playerList = new ArrayList<>();
@@ -62,10 +70,21 @@ public class GameEngine {
 				populateEnemys();
 			}
 		}
-
+		Random random = new Random();
+		tCount++;
 		for(GameObject go: gameobjects){
 			go.update();
+			if(tCount % 250 == 0){
+				if (go instanceof Enemy && random.nextInt(100) < 10) {
+					((Enemy) go).shoot(this);
+				}
+			}
 		}
+
+		renderables.addAll(newGameRenderable);
+		gameobjects.addAll(newGameObject);
+		newGameObject.clear();
+		newGameRenderable.clear();
 
 		// ensure that renderable foreground objects don't go off-screen
 		for(Renderable ro: renderables){
@@ -93,13 +112,23 @@ public class GameEngine {
 						for (EntityView view : gWindow.getEntityViews()) {
 							if (view.matchesEntity(ro)) {
 								view.markForDelete();
+								player.setShooting(false);
 								break;
 							}
 						}
 				}
+				if(ro.getPosition().getY() >= 380){
+					for (EntityView view : gWindow.getEntityViews()) {
+						if (view.matchesEntity(ro)) {
+							view.markForDelete();
+							break;
+						}
+					}
+				}
 
 			}
 
+			// Handle Enemy Movement!!!
 			if(ro instanceof Enemy){
 				if (((Enemy) ro).getDirection() == 1 && ro.getPosition().getX() + ro.getWidth() >= 598) {
 					for(Renderable changeRo: renderables){
@@ -121,6 +150,29 @@ public class GameEngine {
 			}
 
 
+
+			// Check for collisons with the enemys
+			if (ro instanceof Projectile) {
+				Collider projectileCollider = (Collider) ro;
+				for (Renderable enemyRo : renderables) {
+					if (enemyRo instanceof Enemy) {
+						Collider enemyCollider = (Collider) enemyRo;
+						if (projectileCollider.isColliding(enemyCollider)) {
+							for (EntityView view : gWindow.getEntityViews()) {
+								// Get em off my screen!!!!
+								if (view.matchesEntity(enemyRo)) {
+									view.markForDelete();
+								}
+								if (view.matchesEntity(ro)) {
+									view.markForDelete();
+									player.setShooting(false);
+								}
+							}
+						}
+					}
+				}
+			}
+
 		}
 	}
 
@@ -138,6 +190,13 @@ public class GameEngine {
 			long yPos = (long) positionObject.get("y");
 
 			Enemy enemy = new EnemyBuilder().setPosition(new Vector2D(xPos, yPos)).setWidth(40).setHeight(40).setImage(eImage).setPType(projectile).build();
+
+			if ("fast_straight".equals(enemy.getpType())) {
+				enemy.setShootingStrategy(new FastProjectileStrategy());
+			} else if ("slow_straight".equals(enemy.getpType())) {
+				enemy.setShootingStrategy(new SlowProjectileStrategy());
+			}
+
 			renderables.add(enemy);
 			gameobjects.add(enemy);
 		}
@@ -197,6 +256,14 @@ public class GameEngine {
 
 	public void removeRenderable(Renderable renderable) {
 		this.renderables.remove(renderable);
+	}
+
+	public void addNewObject(Renderable renderable){
+		this.newGameRenderable.add(renderable);
+	}
+
+	public void addNewGameObject(GameObject go){
+		this.newGameObject.add(go);
 	}
 
 	public void addGameObject(GameObject go) {
