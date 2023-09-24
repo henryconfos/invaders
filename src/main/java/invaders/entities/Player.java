@@ -83,7 +83,7 @@ public class Player implements Moveable, Damagable, Renderable, Collider {
 
     public void shoot(GameEngine model){
         if(!isShooting){
-            Vector2D newPosition = new Vector2D(this.position.getX(), this.position.getY());
+            Vector2D newPosition = new Vector2D(this.position.getX(), this.position.getY() - 15);
             currentProjectile = currentFactory.createProjectile(newPosition, -1);
             model.addRenderable(currentProjectile);
             model.addGameObject(currentProjectile);
