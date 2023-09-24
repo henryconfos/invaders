@@ -1,16 +1,20 @@
 package invaders.engine;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import invaders.EnemyAndBunkerBuilders.Enemy;
+import invaders.EnemyAndBunkerBuilders.EnemyBuilder;
 import invaders.GameObject;
 import invaders.PFactory.Projectile;
 import invaders.entities.EntityView;
 import invaders.entities.Player;
 import invaders.physics.Vector2D;
 import invaders.rendering.Renderable;
+import javafx.scene.image.Image;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -28,11 +32,13 @@ public class GameEngine {
 	private ArrayList<JSONObject> enemiesList = new ArrayList<>();
 
 	private boolean left;
+	private boolean init = false;
 	private boolean right;
 	private  boolean isLoaded;
 
 	private int wHeight;
 	private int wWidth;
+	private Image eImage = new Image(new File("src/main/resources/enemy.png").toURI().toString(), 100, 100, true, true);
 
 	public GameEngine(String config){
 		// read the config here
@@ -49,6 +55,14 @@ public class GameEngine {
 	 */
 	public void update(GameWindow gWindow){
 		movePlayer();
+
+		if(!init){
+			if(this.isLoaded){
+				this.init = true;
+				populateEnemys();
+			}
+		}
+
 		for(GameObject go: gameobjects){
 			go.update();
 		}
@@ -85,6 +99,28 @@ public class GameEngine {
 				}
 
 			}
+
+			if(ro instanceof Enemy){
+				if (((Enemy) ro).getDirection() == 1 && ro.getPosition().getX() + ro.getWidth() >= 598) {
+					for(Renderable changeRo: renderables){
+						if(changeRo instanceof Enemy){
+							((Enemy) changeRo).down();
+							((Enemy) changeRo).setDirection(-1);
+						}
+					}
+					return;
+				} else if (((Enemy) ro).getDirection() == -1 && ro.getPosition().getX() <= 10) {
+					for(Renderable changeRo: renderables){
+						if(changeRo instanceof Enemy){
+							((Enemy) changeRo).down();
+							((Enemy) changeRo).setDirection(1);
+						}
+					}
+					return;
+				}
+			}
+
+
 		}
 	}
 
@@ -92,7 +128,21 @@ public class GameEngine {
 		return renderables;
 	}
 
+	public void populateEnemys(){
 
+		for(JSONObject e: enemiesList ){
+			JSONObject positionObject = (JSONObject) e.get("position");
+			String projectile = (String) e.get("projectile");
+
+			long xPos = (long) positionObject.get("x");
+			long yPos = (long) positionObject.get("y");
+
+			Enemy enemy = new EnemyBuilder().setPosition(new Vector2D(xPos, yPos)).setWidth(40).setHeight(40).setImage(eImage).setPType(projectile).build();
+			renderables.add(enemy);
+			gameobjects.add(enemy);
+		}
+
+	}
 	public void leftReleased() {
 		this.left = false;
 	}
@@ -145,8 +195,16 @@ public class GameEngine {
 		this.renderables.add(renderable);
 	}
 
+	public void removeRenderable(Renderable renderable) {
+		this.renderables.remove(renderable);
+	}
+
 	public void addGameObject(GameObject go) {
 		this.gameobjects.add(go);
+	}
+
+	public void removeGameObject(GameObject go) {
+		this.gameobjects.remove(go);
 	}
 
 	public boolean loadInConfig(String path) {

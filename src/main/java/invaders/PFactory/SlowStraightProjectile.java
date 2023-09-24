@@ -13,7 +13,7 @@ public class SlowStraightProjectile implements Projectile {
 
     public SlowStraightProjectile(Vector2D p){
         this.position = p;
-        this.image = new Image(new File("src/main/resources/player.png").toURI().toString(), width, height, true, true);
+        this.image = new Image(new File("src/main/resources/projectile.png").toURI().toString(), width, height, true, true);
     }
     @Override
     public void move() {

@@ -3,6 +3,7 @@ package invaders.engine;
 import java.util.List;
 import java.util.ArrayList;
 
+import invaders.GameObject;
 import invaders.entities.EntityViewImpl;
 import invaders.entities.SpaceBackground;
 import javafx.util.Duration;
@@ -78,6 +79,8 @@ public class GameWindow {
         for (EntityView entityView : entityViews) {
             if (entityView.isMarkedForDelete()) {
                 pane.getChildren().remove(entityView.getNode());
+                model.removeRenderable(entityView.getRenderable());
+                model.removeGameObject((GameObject) entityView.getRenderable());
             }
         }
         entityViews.removeIf(EntityView::isMarkedForDelete);
