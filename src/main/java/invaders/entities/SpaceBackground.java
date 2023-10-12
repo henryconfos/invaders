@@ -8,7 +8,6 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.Node;
 
 public class SpaceBackground implements Renderable {
 	private Rectangle space;
@@ -47,5 +46,23 @@ public class SpaceBackground implements Renderable {
 	@Override
 	public Layer getLayer() {
 		return Layer.BACKGROUND;
+	}
+
+	@Override
+	public boolean isAlive() {
+		return true;
+	}
+
+	@Override
+	public void takeDamage(double amount) {}
+
+	@Override
+	public double getHealth() {
+		return 0;
+	}
+
+	@Override
+	public String getRenderableObjectName() {
+		return "background";
 	}
 }

@@ -1,336 +1,153 @@
 package invaders.engine;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Random;
 
-import invaders.BunkerStates.RedState;
-import invaders.EnemyAndBunkerBuilders.Bunker;
-import invaders.EnemyAndBunkerBuilders.BunkerBuilder;
-import invaders.EnemyAndBunkerBuilders.Enemy;
-import invaders.EnemyAndBunkerBuilders.EnemyBuilder;
-import invaders.GameObject;
-import invaders.PFactory.Projectile;
-import invaders.ShootingStrat.FastProjectileStrategy;
-import invaders.ShootingStrat.SlowProjectileStrategy;
-import invaders.entities.EntityView;
+import invaders.ConfigReader;
+import invaders.builder.BunkerBuilder;
+import invaders.builder.Director;
+import invaders.builder.EnemyBuilder;
+import invaders.factory.Projectile;
+import invaders.gameobject.Bunker;
+import invaders.gameobject.Enemy;
+import invaders.gameobject.GameObject;
 import invaders.entities.Player;
-import invaders.physics.Collider;
-import invaders.physics.Vector2D;
 import invaders.rendering.Renderable;
-import javafx.scene.image.Image;
-import javafx.stage.Stage;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 
+/**
+ * This class manages the main loop and logic of the game
+ */
 public class GameEngine {
+	private List<GameObject> gameObjects = new ArrayList<>(); // A list of game objects that gets updated each frame
+	private List<GameObject> pendingToAddGameObject = new ArrayList<>();
+	private List<GameObject> pendingToRemoveGameObject = new ArrayList<>();
 
-	private List<GameObject> gameobjects;
-	private List<Renderable> renderables;
-	private List<Renderable> newGameRenderable = new ArrayList<>();
-	private List<GameObject> newGameObject = new ArrayList<>();
+	private List<Renderable> pendingToAddRenderable = new ArrayList<>();
+	private List<Renderable> pendingToRemoveRenderable = new ArrayList<>();
+
+	private List<Renderable> renderables =  new ArrayList<>();
+
 	private Player player;
-	private int tCount;
-
-	private ArrayList<JSONObject> gameList = new ArrayList<>();
-	private ArrayList<JSONObject> playerList = new ArrayList<>();
-	private ArrayList<JSONObject> bunkersList = new ArrayList<>();
-	private ArrayList<JSONObject> enemiesList = new ArrayList<>();
 
 	private boolean left;
-	private boolean init = false;
 	private boolean right;
-	private  boolean isLoaded;
-
-	private int wHeight;
-	private int wWidth;
-	private Image eImage = new Image(new File("src/main/resources/enemy.png").toURI().toString(), 100, 100, true, true);
-	private Image bImage = new Image(new File("src/main/resources/bunkerGreen.jpg").toURI().toString(), 100, 100, true, true);
+	private int gameWidth;
+	private int gameHeight;
+	private int timer = 45;
 
 	public GameEngine(String config){
-		// read the config here
-		gameobjects = new ArrayList<GameObject>();
-		renderables = new ArrayList<Renderable>();
+		// Read the config here
+		ConfigReader.parse(config);
 
-		player = new Player(new Vector2D(200, 380));
-		this.isLoaded = loadInConfig(config);
+		// Get game width and height
+		gameWidth = ((Long)((JSONObject) ConfigReader.getGameInfo().get("size")).get("x")).intValue();
+		gameHeight = ((Long)((JSONObject) ConfigReader.getGameInfo().get("size")).get("y")).intValue();
+
+		//Get player info
+		this.player = new Player(ConfigReader.getPlayerInfo());
 		renderables.add(player);
+
+
+		Director director = new Director();
+		BunkerBuilder bunkerBuilder = new BunkerBuilder();
+		//Get Bunkers info
+		for(Object eachBunkerInfo:ConfigReader.getBunkersInfo()){
+			Bunker bunker = director.constructBunker(bunkerBuilder, (JSONObject) eachBunkerInfo);
+			gameObjects.add(bunker);
+			renderables.add(bunker);
+		}
+
+
+		EnemyBuilder enemyBuilder = new EnemyBuilder();
+		//Get Enemy info
+		for(Object eachEnemyInfo:ConfigReader.getEnemiesInfo()){
+			Enemy enemy = director.constructEnemy(this,enemyBuilder,(JSONObject)eachEnemyInfo);
+			gameObjects.add(enemy);
+			renderables.add(enemy);
+		}
+
 	}
 
 	/**
 	 * Updates the game/simulation
 	 */
-	public void update(GameWindow gWindow){
+	public void update(){
+		timer+=1;
+
 		movePlayer();
 
-		// Check if game config has loaded, then load in elements to the screen!
-		if(!init){
-			if(this.isLoaded){
-				this.init = true;
-				populateEnemys();
-				populateBunkers();
-			}
+		for(GameObject go: gameObjects){
+			go.update(this);
 		}
 
-		if (!hasEnemies()) {
-			System.out.println("You win!");
-			Stage stage = (Stage) gWindow.getScene().getWindow();
-			stage.close();
-			return;
-		}
+		for (int i = 0; i < renderables.size(); i++) {
+			Renderable renderableA = renderables.get(i);
+			for (int j = i+1; j < renderables.size(); j++) {
+				Renderable renderableB = renderables.get(j);
 
-		Random random = new Random();
-		tCount++;
-		for(GameObject go: gameobjects){
-			go.update();
-			if(tCount % 250 == 0){
-				if (go instanceof Enemy && random.nextInt(100) < 10) {
-					((Enemy) go).shoot(this);
+				if((renderableA.getRenderableObjectName().equals("Enemy") && renderableB.getRenderableObjectName().equals("EnemyProjectile"))
+						||(renderableA.getRenderableObjectName().equals("EnemyProjectile") && renderableB.getRenderableObjectName().equals("Enemy"))||
+						(renderableA.getRenderableObjectName().equals("EnemyProjectile") && renderableB.getRenderableObjectName().equals("EnemyProjectile"))){
+				}else{
+					if(renderableA.isColliding(renderableB) && (renderableA.getHealth()>0 && renderableB.getHealth()>0)) {
+						renderableA.takeDamage(1);
+						renderableB.takeDamage(1);
+					}
 				}
 			}
 		}
 
-		renderables.addAll(newGameRenderable);
-		gameobjects.addAll(newGameObject);
-		newGameObject.clear();
-		newGameRenderable.clear();
 
 		// ensure that renderable foreground objects don't go off-screen
+		int offset = 1;
 		for(Renderable ro: renderables){
 			if(!ro.getLayer().equals(Renderable.Layer.FOREGROUND)){
 				continue;
 			}
-
-			if(ro.getPosition().getX() + ro.getWidth() >= 640) {
-				ro.getPosition().setX(639-ro.getWidth());
+			if(ro.getPosition().getX() + ro.getWidth() >= gameWidth) {
+				ro.getPosition().setX((gameWidth - offset) -ro.getWidth());
 			}
 
 			if(ro.getPosition().getX() <= 0) {
-				ro.getPosition().setX(1);
+				ro.getPosition().setX(offset);
 			}
 
-			if(ro.getPosition().getY() + ro.getHeight() >= 400) {
-				ro.getPosition().setY(399-ro.getHeight());
+			if(ro.getPosition().getY() + ro.getHeight() >= gameHeight) {
+				ro.getPosition().setY((gameHeight - offset) -ro.getHeight());
 			}
 
 			if(ro.getPosition().getY() <= 0) {
-				ro.getPosition().setY(1);
+				ro.getPosition().setY(offset);
 			}
-			if (ro instanceof Projectile) {
-				if(ro.getPosition().getY() <= 1.0){
-						for (EntityView view : gWindow.getEntityViews()) {
-							if (view.matchesEntity(ro)) {
-								view.markForDelete();
-								player.setShooting(false);
-								break;
-							}
-						}
-				}
-				if(ro.getPosition().getY() >= 380){
-					for (EntityView view : gWindow.getEntityViews()) {
-						if (view.matchesEntity(ro)) {
-							view.markForDelete();
-							break;
-						}
-					}
-				}
-
-			}
-
-			// Check if enemy has reached the bottom of the screen.
-			if(ro instanceof Enemy){
-				if(ro.getPosition().getY() >= 380){
-					System.out.println("You Loose! An enemy reached the end!!");
-					Stage stage = (Stage) gWindow.getScene().getWindow();
-					stage.close();
-				}
-			}
-
-			// Check if player has run out of lives.
-			if(ro instanceof Player){
-				if(player.getHealth() <= 0.0){
-					System.out.println("You Loose! You ran out of lives");
-					Stage stage = (Stage) gWindow.getScene().getWindow();
-					stage.close();
-				}
-			}
-
-			// Handle Enemy Movement!!!
-			if(ro instanceof Enemy){
-				if (((Enemy) ro).getDirection() == 1 && ro.getPosition().getX() + ro.getWidth() >= 598) {
-					for(Renderable changeRo: renderables){
-						if(changeRo instanceof Enemy){
-							((Enemy) changeRo).down();
-							((Enemy) changeRo).setDirection(-1);
-						}
-					}
-					return;
-				} else if (((Enemy) ro).getDirection() == -1 && ro.getPosition().getX() <= 10) {
-					for(Renderable changeRo: renderables){
-						if(changeRo instanceof Enemy){
-							((Enemy) changeRo).down();
-							((Enemy) changeRo).setDirection(1);
-						}
-					}
-					return;
-				}
-			}
-
-
-
-			// Check for projectile with the enemys
-			if (ro instanceof Projectile) {
-				Collider projectileCollider = (Collider) ro;
-				for (Renderable enemyRo : renderables) {
-					if (enemyRo instanceof Enemy) {
-						Collider enemyCollider = (Collider) enemyRo;
-						if (projectileCollider.isColliding(enemyCollider)) {
-							for (EntityView view : gWindow.getEntityViews()) {
-								// Get em off my screen!!!!
-								if (view.matchesEntity(enemyRo)) {
-									view.markForDelete();
-									for(Renderable changeRo: renderables){
-										if(changeRo instanceof Enemy){
-											((Enemy) enemyRo).setSpeedMulitpler(((Enemy) enemyRo).getSpeedMulitpler()+0.1);
-										}
-									}
-								}
-								if (view.matchesEntity(ro)) {
-									view.markForDelete();
-									player.setShooting(false);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			// Check if player is hit by projectile.
-			if (ro instanceof Projectile) {
-				Collider projectileCollider = (Collider) ro;
-				if (projectileCollider.isColliding(player)) {
-					player.setHealth(player.getHealth()-1);
-					System.out.println(player.getHealth());
-					for (EntityView view : gWindow.getEntityViews()) {
-						if (view.matchesEntity(ro)) {
-							view.markForDelete();
-						}
-					}
-				}
-			}
-
-			// Check if bunker is hit by projectile
-			if (ro instanceof Projectile) {
-				Collider projectileCollider = (Collider) ro;
-				for (Renderable bunkerRo : renderables) {
-					if (bunkerRo instanceof Bunker) {
-						Collider bunkerCollider = (Collider) bunkerRo;
-						if (projectileCollider.isColliding(bunkerCollider)) {
-
-							// If red state get rid of bunker:
-							if(((Bunker) bunkerRo).getState() instanceof RedState){
-								for (EntityView view : gWindow.getEntityViews()) {
-									if (view.matchesEntity(bunkerRo)) {
-										view.markForDelete();
-										player.setShooting(false);
-									}
-								}
-							}
-
-							((Bunker) bunkerRo).changeState();
-
-							for (EntityView view : gWindow.getEntityViews()) {
-								if (view.matchesEntity(ro)) {
-									view.markForDelete();
-									player.setShooting(false);
-								}
-							}
-						}
-					}
-				}
-			}
-
-			// Check if an enemy hits a bunker:
-			if (ro instanceof Enemy) {
-				Collider enemyCollider = (Collider) ro;
-				for (Renderable bunkerRo : renderables) {
-					if (bunkerRo instanceof Bunker) {
-						Collider bunkerCollider = (Collider) bunkerRo;
-						if (enemyCollider.isColliding(bunkerCollider)) {
-							for (EntityView view : gWindow.getEntityViews()) {
-								if (view.matchesEntity(ro)) {
-									view.markForDelete();
-								}
-							}
-						}
-					}
-				}
-			}
-
-
 		}
+
 	}
 
 	public List<Renderable> getRenderables(){
 		return renderables;
 	}
 
-	public void populateEnemys(){
-
-		for(JSONObject e: enemiesList ){
-			JSONObject positionObject = (JSONObject) e.get("position");
-			String projectile = (String) e.get("projectile");
-
-			long xPos = (long) positionObject.get("x");
-			long yPos = (long) positionObject.get("y");
-
-			Enemy enemy = new EnemyBuilder().setPosition(new Vector2D(xPos, yPos)).setWidth(40).setHeight(40).setImage(eImage).setPType(projectile).build();
-
-			if ("fast_straight".equals(enemy.getpType())) {
-				enemy.setShootingStrategy(new FastProjectileStrategy());
-			} else if ("slow_straight".equals(enemy.getpType())) {
-				enemy.setShootingStrategy(new SlowProjectileStrategy());
-			}
-
-			renderables.add(enemy);
-			gameobjects.add(enemy);
-		}
-
+	public List<GameObject> getGameObjects() {
+		return gameObjects;
+	}
+	public List<GameObject> getPendingToAddGameObject() {
+		return pendingToAddGameObject;
 	}
 
-	public void populateBunkers(){
-		for(JSONObject e: bunkersList ){
-			JSONObject positionObject = (JSONObject) e.get("position");
-
-			long xPos = (long) positionObject.get("x");
-			long yPos = (long) positionObject.get("y");
-
-			JSONObject sizeObject = (JSONObject) e.get("size");
-
-			long xSize = (long) sizeObject.get("x");
-			long ySize = (long) sizeObject.get("y");
-
-			Bunker bunker = new BunkerBuilder().setPosition(new Vector2D(xPos, yPos)).setWidth(xSize).setHeight(ySize).setImage(bImage).build();
-
-			renderables.add(bunker);
-			gameobjects.add(bunker);
-		}
+	public List<GameObject> getPendingToRemoveGameObject() {
+		return pendingToRemoveGameObject;
 	}
 
-	public boolean hasEnemies(){
-		for (Renderable ro : renderables) {
-			if (ro instanceof Enemy) {
-				return true;
-			}
-		}
-		return false;
+	public List<Renderable> getPendingToAddRenderable() {
+		return pendingToAddRenderable;
 	}
+
+	public List<Renderable> getPendingToRemoveRenderable() {
+		return pendingToRemoveRenderable;
+	}
+
+
 	public void leftReleased() {
 		this.left = false;
 	}
@@ -346,27 +163,15 @@ public class GameEngine {
 		this.right = true;
 	}
 
-	public boolean getLoadStatus(){ return this.isLoaded; }
-
-	public ArrayList<JSONObject> getGameList() {
-		return gameList;
-	}
-
-	public ArrayList<JSONObject> getPlayerList() {
-		return playerList;
-	}
-
-	public ArrayList<JSONObject> getBunkersList() {
-		return bunkersList;
-	}
-
-	public ArrayList<JSONObject> getEnemiesList() {
-		return enemiesList;
-	}
-
 	public boolean shootPressed(){
-		player.shoot(this);
-		return true;
+		if(timer>45 && player.isAlive()){
+			Projectile projectile = player.shoot();
+			gameObjects.add(projectile);
+			renderables.add(projectile);
+			timer=0;
+			return true;
+		}
+		return false;
 	}
 
 	private void movePlayer(){
@@ -379,49 +184,15 @@ public class GameEngine {
 		}
 	}
 
-	public void addRenderable(Renderable renderable) {
-		this.renderables.add(renderable);
+	public int getGameWidth() {
+		return gameWidth;
 	}
 
-	public void removeRenderable(Renderable renderable) {
-		this.renderables.remove(renderable);
+	public int getGameHeight() {
+		return gameHeight;
 	}
 
-	public void addNewObject(Renderable renderable){
-		this.newGameRenderable.add(renderable);
-	}
-
-	public void addNewGameObject(GameObject go){
-		this.newGameObject.add(go);
-	}
-
-	public void addGameObject(GameObject go) {
-		this.gameobjects.add(go);
-	}
-
-	public void removeGameObject(GameObject go) {
-		this.gameobjects.remove(go);
-	}
-
-	public boolean loadInConfig(String path) {
-		// Creating ArrayLists for Game, Player, Bunkers, and Enemies
-
-		JSONParser parser = new JSONParser();
-
-		try (FileReader reader = new FileReader(path)) {
-			JSONObject config = (JSONObject) parser.parse(reader);
-
-			this.gameList.add((JSONObject) config.get("Game"));
-			this.playerList.add((JSONObject) config.get("Player"));
-			this.bunkersList.addAll((JSONArray) config.get("Bunkers"));
-			this.enemiesList.addAll((JSONArray) config.get("Enemies"));
-
-
-			return true;
-
-		} catch (IOException | ParseException e) {
-			e.printStackTrace();
-			return false;
-		}
+	public Player getPlayer() {
+		return player;
 	}
 }

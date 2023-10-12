@@ -15,13 +15,8 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        Map<String, String> params = getParameters().getNamed();
-
-        GameEngine model = new GameEngine("src/main/resources/config.json");
-
-        System.out.println(model.getLoadStatus());
-        // 600, 800
-        GameWindow window = new GameWindow(model, 640, 400);
+        GameEngine model = new GameEngine("src/main/resources/config_easy.json");
+        GameWindow window = new GameWindow(model);
         window.run();
 
         primaryStage.setTitle("Space Invaders");
@@ -29,6 +24,5 @@ public class App extends Application {
         primaryStage.show();
 
         window.run();
-
     }
 }

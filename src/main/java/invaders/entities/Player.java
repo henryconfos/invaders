@@ -1,37 +1,42 @@
 package invaders.entities;
 
-import invaders.PFactory.Projectile;
-import invaders.PFactory.ProjectileFactory;
-import invaders.PFactory.SlowStraightProjectileFactory;
-import invaders.engine.GameEngine;
-import invaders.logic.Damagable;
+import invaders.factory.PlayerProjectile;
+import invaders.factory.PlayerProjectileFactory;
+import invaders.factory.Projectile;
+import invaders.factory.ProjectileFactory;
 import invaders.physics.Collider;
 import invaders.physics.Moveable;
 import invaders.physics.Vector2D;
 import invaders.rendering.Animator;
 import invaders.rendering.Renderable;
 
+import invaders.strategy.NormalProjectileStrategy;
 import javafx.scene.image.Image;
+import org.json.simple.JSONObject;
 
 import java.io.File;
 
-public class Player implements Moveable, Damagable, Renderable, Collider {
+public class Player implements Moveable, Renderable {
 
     private final Vector2D position;
-    private final Animator anim = null;
-    private double health = 3;
-    private boolean isShooting = false;
-    private ProjectileFactory slowProjectileFactory = new SlowStraightProjectileFactory();
-    private ProjectileFactory currentFactory = slowProjectileFactory;
-    private Projectile currentProjectile;
+    private double health;
+    private double velocity;
 
-    private final double width = 25;
-    private final double height = 30;
+    private final double width = 20;
+    private final double height = 20;
     private final Image image;
+    private ProjectileFactory playerProjectileFactory = new PlayerProjectileFactory();
 
-    public Player(Vector2D position){
+
+    public Player(JSONObject playerInfo){
+        int x = ((Long)((JSONObject)(playerInfo.get("position"))).get("x")).intValue();
+        int y = ((Long)((JSONObject)(playerInfo.get("position"))).get("y")).intValue();
+
         this.image = new Image(new File("src/main/resources/player.png").toURI().toString(), width, height, true, true);
-        this.position = position;
+        this.position = new Vector2D(x,y);
+        this.health = ((Long) playerInfo.get("lives")).intValue();
+        this.velocity = ((Long) playerInfo.get("speed")).intValue();
+
     }
 
     @Override
@@ -39,21 +44,9 @@ public class Player implements Moveable, Damagable, Renderable, Collider {
         this.health -= amount;
     }
 
-    public boolean isShooting() {
-        return isShooting;
-    }
-
-    public void setShooting(boolean shooting) {
-        isShooting = shooting;
-    }
-
     @Override
     public double getHealth() {
         return this.health;
-    }
-
-    public void setHealth(double health) {
-        this.health = health;
     }
 
     @Override
@@ -73,23 +66,16 @@ public class Player implements Moveable, Damagable, Renderable, Collider {
 
     @Override
     public void left() {
-        this.position.setX(this.position.getX() - 1);
+        this.position.setX(this.position.getX() - this.velocity);
     }
 
     @Override
     public void right() {
-        this.position.setX(this.position.getX() + 1);
+        this.position.setX(this.position.getX() + this.velocity);
     }
 
-    public void shoot(GameEngine model){
-        if(!isShooting){
-            Vector2D newPosition = new Vector2D(this.position.getX(), this.position.getY() - 15);
-            currentProjectile = currentFactory.createProjectile(newPosition, -1);
-            model.addRenderable(currentProjectile);
-            model.addGameObject(currentProjectile);
-            isShooting = true;
-        }
-
+    public Projectile shoot(){
+        return playerProjectileFactory.createProjectile(new Vector2D(this.position.getX() + 5 ,this.position.getY() - 10),new NormalProjectileStrategy(),null);
     }
 
     @Override
@@ -115,6 +101,11 @@ public class Player implements Moveable, Damagable, Renderable, Collider {
     @Override
     public Layer getLayer() {
         return Layer.FOREGROUND;
+    }
+
+    @Override
+    public String getRenderableObjectName() {
+        return "Player";
     }
 
 }

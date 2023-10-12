@@ -38,14 +38,13 @@ public class EntityViewImpl implements EntityView {
         node.setFitHeight(entity.getHeight());
         node.setFitWidth(entity.getWidth());
         node.setPreserveRatio(true);
-        //delete = false;
+        delete = false;
     }
 
     @Override
     public boolean matchesEntity(Renderable entity) {
         return this.entity.equals(entity);
     }
-
 
     @Override
     public void markForDelete() {
@@ -55,11 +54,6 @@ public class EntityViewImpl implements EntityView {
     @Override
     public Node getNode() {
         return node;
-    }
-
-    @Override
-    public Renderable getRenderable() {
-        return this.entity;
     }
 
     @Override
