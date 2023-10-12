@@ -6,8 +6,8 @@ import java.io.File;
 
 public class RedState implements BunkerState {
     @Override
-    public Image getImage() {
-        return new Image(new File("src/main/resources/bunkerRed.jpg").toURI().toString(), 100, 100, true, true);
+    public Image getImage(double width, double height) {
+        return new Image(new File("src/main/resources/bunkerRed.jpg").toURI().toString(), width, height, false, true);
     }
 
     @Override

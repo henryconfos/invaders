@@ -29,7 +29,7 @@ public class Bunker implements Renderable, GameObject, Collider {
 
     @Override
     public Image getImage() {
-        return state.getImage();
+        return state.getImage(this.width, this.height);
     }
     public void changeState() {
         this.state = state.nextState();

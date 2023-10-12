@@ -4,6 +4,6 @@ import invaders.EnemyAndBunkerBuilders.Bunker;
 import javafx.scene.image.Image;
 
 public interface BunkerState {
-    Image getImage();
+    Image getImage(double width, double height);
     BunkerState nextState();
 }

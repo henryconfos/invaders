@@ -19,7 +19,7 @@ public class Player implements Moveable, Damagable, Renderable, Collider {
 
     private final Vector2D position;
     private final Animator anim = null;
-    private double health = 100;
+    private double health = 3;
     private boolean isShooting = false;
     private ProjectileFactory slowProjectileFactory = new SlowStraightProjectileFactory();
     private ProjectileFactory currentFactory = slowProjectileFactory;

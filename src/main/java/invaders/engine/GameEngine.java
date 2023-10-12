@@ -23,6 +23,7 @@ import invaders.physics.Collider;
 import invaders.physics.Vector2D;
 import invaders.rendering.Renderable;
 import javafx.scene.image.Image;
+import javafx.stage.Stage;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -75,6 +76,13 @@ public class GameEngine {
 				populateEnemys();
 				populateBunkers();
 			}
+		}
+
+		if (!hasEnemies()) {
+			System.out.println("You win!");
+			Stage stage = (Stage) gWindow.getScene().getWindow();
+			stage.close();
+			return;
 		}
 
 		Random random = new Random();
@@ -135,6 +143,24 @@ public class GameEngine {
 
 			}
 
+			// Check if enemy has reached the bottom of the screen.
+			if(ro instanceof Enemy){
+				if(ro.getPosition().getY() >= 380){
+					System.out.println("You Loose! An enemy reached the end!!");
+					Stage stage = (Stage) gWindow.getScene().getWindow();
+					stage.close();
+				}
+			}
+
+			// Check if player has run out of lives.
+			if(ro instanceof Player){
+				if(player.getHealth() <= 0.0){
+					System.out.println("You Loose! You ran out of lives");
+					Stage stage = (Stage) gWindow.getScene().getWindow();
+					stage.close();
+				}
+			}
+
 			// Handle Enemy Movement!!!
 			if(ro instanceof Enemy){
 				if (((Enemy) ro).getDirection() == 1 && ro.getPosition().getX() + ro.getWidth() >= 598) {
@@ -172,7 +198,6 @@ public class GameEngine {
 									for(Renderable changeRo: renderables){
 										if(changeRo instanceof Enemy){
 											((Enemy) enemyRo).setSpeedMulitpler(((Enemy) enemyRo).getSpeedMulitpler()+0.1);
-											System.out.println(((Enemy) enemyRo).getSpeedMulitpler());
 										}
 									}
 								}
@@ -207,7 +232,6 @@ public class GameEngine {
 					if (bunkerRo instanceof Bunker) {
 						Collider bunkerCollider = (Collider) bunkerRo;
 						if (projectileCollider.isColliding(bunkerCollider)) {
-
 
 							// If red state get rid of bunker:
 							if(((Bunker) bunkerRo).getState() instanceof RedState){
@@ -297,6 +321,15 @@ public class GameEngine {
 			renderables.add(bunker);
 			gameobjects.add(bunker);
 		}
+	}
+
+	public boolean hasEnemies(){
+		for (Renderable ro : renderables) {
+			if (ro instanceof Enemy) {
+				return true;
+			}
+		}
+		return false;
 	}
 	public void leftReleased() {
 		this.left = false;
