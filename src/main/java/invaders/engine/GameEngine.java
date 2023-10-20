@@ -7,11 +7,14 @@ import invaders.ConfigReader;
 import invaders.builder.BunkerBuilder;
 import invaders.builder.Director;
 import invaders.builder.EnemyBuilder;
+import invaders.entities.EntityView;
 import invaders.factory.Projectile;
 import invaders.gameobject.Bunker;
 import invaders.gameobject.Enemy;
 import invaders.gameobject.GameObject;
 import invaders.entities.Player;
+import invaders.observer.Observer;
+import invaders.prototype.ConfigPrototype;
 import invaders.rendering.Renderable;
 import org.json.simple.JSONObject;
 
@@ -25,10 +28,13 @@ public class GameEngine {
 
 	private List<Renderable> pendingToAddRenderable = new ArrayList<>();
 	private List<Renderable> pendingToRemoveRenderable = new ArrayList<>();
+	private List<Observer> observers = new ArrayList<>();
 
 	private List<Renderable> renderables =  new ArrayList<>();
 
 	private Player player;
+	private GameWindow window;
+	private boolean windowSet = false;
 
 	private boolean left;
 	private boolean right;
@@ -38,34 +44,9 @@ public class GameEngine {
 
 	public GameEngine(String config){
 		// Read the config here
+		setDifficulty("easy");
 		ConfigReader.parse(config);
-
-		// Get game width and height
-		gameWidth = ((Long)((JSONObject) ConfigReader.getGameInfo().get("size")).get("x")).intValue();
-		gameHeight = ((Long)((JSONObject) ConfigReader.getGameInfo().get("size")).get("y")).intValue();
-
-		//Get player info
-		this.player = new Player(ConfigReader.getPlayerInfo());
-		renderables.add(player);
-
-
-		Director director = new Director();
-		BunkerBuilder bunkerBuilder = new BunkerBuilder();
-		//Get Bunkers info
-		for(Object eachBunkerInfo:ConfigReader.getBunkersInfo()){
-			Bunker bunker = director.constructBunker(bunkerBuilder, (JSONObject) eachBunkerInfo);
-			gameObjects.add(bunker);
-			renderables.add(bunker);
-		}
-
-
-		EnemyBuilder enemyBuilder = new EnemyBuilder();
-		//Get Enemy info
-		for(Object eachEnemyInfo:ConfigReader.getEnemiesInfo()){
-			Enemy enemy = director.constructEnemy(this,enemyBuilder,(JSONObject)eachEnemyInfo);
-			gameObjects.add(enemy);
-			renderables.add(enemy);
-		}
+		iGame();
 
 	}
 
@@ -195,4 +176,75 @@ public class GameEngine {
 	public Player getPlayer() {
 		return player;
 	}
+
+	public void addObserver(Observer observer) {
+		observers.add(observer);
+	}
+
+	public void removeObserver(Observer observer) {
+		observers.remove(observer);
+	}
+
+	public void notifyObservers(String difficulty) {
+		for (Observer observer : observers) {
+			observer.update(difficulty, this);
+		}
+	}
+
+	public void setWindow(GameWindow window) {
+		this.window = window;
+		this.windowSet = true;
+	}
+
+	public void setDifficulty(String difficulty) {
+		notifyObservers(difficulty);
+	}
+
+	public void iGame(){
+		resetGameState();
+		// Get game width and height
+		gameWidth = ((Long)((JSONObject) ConfigReader.getGameInfo().get("size")).get("x")).intValue();
+		gameHeight = ((Long)((JSONObject) ConfigReader.getGameInfo().get("size")).get("y")).intValue();
+
+		//Get player info
+		this.player = new Player(ConfigReader.getPlayerInfo());
+		renderables.add(player);
+
+
+		Director director = new Director();
+		BunkerBuilder bunkerBuilder = new BunkerBuilder();
+		//Get Bunkers info
+		for(Object eachBunkerInfo:ConfigReader.getBunkersInfo()){
+			Bunker bunker = director.constructBunker(bunkerBuilder, (JSONObject) eachBunkerInfo);
+			gameObjects.add(bunker);
+			renderables.add(bunker);
+		}
+
+
+		EnemyBuilder enemyBuilder = new EnemyBuilder();
+		//Get Enemy info
+		for(Object eachEnemyInfo:ConfigReader.getEnemiesInfo()){
+			Enemy enemy = director.constructEnemy(this,enemyBuilder,(JSONObject)eachEnemyInfo);
+			gameObjects.add(enemy);
+			renderables.add(enemy);
+		}
+	}
+
+	private void resetGameState() {
+		gameObjects.clear();
+		pendingToAddGameObject.clear();
+		pendingToRemoveGameObject.clear();
+		renderables.clear();
+		pendingToAddRenderable.clear();
+		pendingToRemoveRenderable.clear();
+
+		if(this.windowSet){
+			for (EntityView entityView : this.window.getEntityViews()){
+				entityView.markForDelete();
+			}
+		}
+
+	}
+
+
 }

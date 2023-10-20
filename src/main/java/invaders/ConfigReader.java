@@ -1,5 +1,6 @@
 package invaders;
 
+import invaders.prototype.ConfigPrototype;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -40,6 +41,16 @@ public class ConfigReader {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+    }
+
+    @Override
+    public ConfigPrototype clone() {
+        try {
+            return (ConfigPrototype) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static JSONObject getGameInfo() {

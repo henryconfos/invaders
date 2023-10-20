@@ -108,4 +108,12 @@ public class GameWindow {
 	public Scene getScene() {
         return scene;
     }
+
+    public List<EntityView> getEntityViews() {
+        return entityViews;
+    }
+
+    public void clearEV(){
+        this.entityViews.clear();
+    }
 }

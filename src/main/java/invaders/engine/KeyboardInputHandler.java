@@ -59,6 +59,14 @@ class KeyboardInputHandler {
         if(right){
             model.rightPressed();
         }
+
+        if (keyEvent.getCode().equals(KeyCode.E)) {
+            model.setDifficulty("easy");
+        } else if (keyEvent.getCode().equals(KeyCode.M)) {
+            model.setDifficulty("medium");
+        } else if (keyEvent.getCode().equals(KeyCode.H)) {
+            model.setDifficulty("hard");
+        }
     }
 
     void handleReleased(KeyEvent keyEvent) {
