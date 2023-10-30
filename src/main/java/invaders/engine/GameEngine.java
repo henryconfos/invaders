@@ -8,14 +8,19 @@ import invaders.builder.BunkerBuilder;
 import invaders.builder.Director;
 import invaders.builder.EnemyBuilder;
 import invaders.entities.EntityView;
+import invaders.factory.EnemyProjectile;
+import invaders.factory.PlayerProjectile;
 import invaders.factory.Projectile;
 import invaders.gameobject.Bunker;
 import invaders.gameobject.Enemy;
 import invaders.gameobject.GameObject;
 import invaders.entities.Player;
+import invaders.memento.Caretaker;
+import invaders.memento.Memento;
 import invaders.observer.Observer;
-import invaders.prototype.ConfigPrototype;
 import invaders.rendering.Renderable;
+import invaders.strategy.FastProjectileStrategy;
+import invaders.strategy.SlowProjectileStrategy;
 import org.json.simple.JSONObject;
 
 /**
@@ -33,6 +38,9 @@ public class GameEngine {
 	private List<Renderable> renderables =  new ArrayList<>();
 
 	private Player player;
+	private int score = 0;
+	private long startTime;
+	private long elapsedTime;
 	private GameWindow window;
 	private boolean windowSet = false;
 
@@ -41,11 +49,13 @@ public class GameEngine {
 	private int gameWidth;
 	private int gameHeight;
 	private int timer = 45;
+	private final Caretaker caretaker = new Caretaker();
 
 	public GameEngine(String config){
 		// Read the config here
 		setDifficulty("easy");
 		ConfigReader.parse(config);
+		this.startTime = System.currentTimeMillis();
 		iGame();
 
 	}
@@ -57,6 +67,10 @@ public class GameEngine {
 		timer+=1;
 
 		movePlayer();
+
+		elapsedTime = System.currentTimeMillis() - startTime;
+		String formattedTime = formatTime(elapsedTime);
+		notifyTimeObservers(formattedTime);
 
 		for(GameObject go: gameObjects){
 			go.update(this);
@@ -74,6 +88,27 @@ public class GameEngine {
 					if(renderableA.isColliding(renderableB) && (renderableA.getHealth()>0 && renderableB.getHealth()>0)) {
 						renderableA.takeDamage(1);
 						renderableB.takeDamage(1);
+						System.out.println(renderableA);
+						System.out.println(renderableB);
+
+						if(renderableA instanceof EnemyProjectile && renderableB instanceof PlayerProjectile){
+							if(((EnemyProjectile) renderableA).getStrategy() instanceof SlowProjectileStrategy){
+								this.notifyScoreObservers(1);
+							}
+							if(((EnemyProjectile) renderableA).getStrategy() instanceof FastProjectileStrategy){
+								this.notifyScoreObservers(2);
+							}
+						}
+
+						if(renderableA instanceof Enemy && renderableB instanceof PlayerProjectile){
+							if(((Enemy) renderableA).getProjectileStrategy() instanceof SlowProjectileStrategy){
+								this.notifyScoreObservers(3);
+							}
+							if (((Enemy) renderableA).getProjectileStrategy() instanceof FastProjectileStrategy){
+								this.notifyScoreObservers(4);
+							}
+						}
+
 					}
 				}
 			}
@@ -149,6 +184,7 @@ public class GameEngine {
 			Projectile projectile = player.shoot();
 			gameObjects.add(projectile);
 			renderables.add(projectile);
+			saveState();
 			timer=0;
 			return true;
 		}
@@ -191,6 +227,17 @@ public class GameEngine {
 		}
 	}
 
+	public void notifyScoreObservers(int addedScore) {
+		for (Observer observer : observers) {
+			observer.updateScore(addedScore);
+		}
+	}
+
+	public void notifyTimeObservers(String newTime) {
+		for (Observer observer : observers) {
+			observer.updateTime(newTime);
+		}
+	}
 	public void setWindow(GameWindow window) {
 		this.window = window;
 		this.windowSet = true;
@@ -198,6 +245,17 @@ public class GameEngine {
 
 	public void setDifficulty(String difficulty) {
 		notifyObservers(difficulty);
+	}
+	private String formatTime(long millis) {
+		int seconds = (int) (millis / 1000) % 60;
+		int minutes = (int) (millis / (1000 * 60));
+		String addZero = "";
+		if(seconds < 10){
+			addZero = "0";
+		}else{
+			addZero = "";
+		}
+		return String.format(minutes + ":"+ addZero + seconds);
 	}
 
 	public void iGame(){
@@ -244,6 +302,19 @@ public class GameEngine {
 			}
 		}
 
+	}
+
+	public void saveState() {
+		caretaker.saveStateToMemento(new Memento(gameObjects, player));
+	}
+
+	public void undoState() {
+		Memento previousState = caretaker.getStateFromMemento();
+		if (previousState != null) {
+			iGame();
+			this.gameObjects = previousState.getGameObjectsState();
+			this.player = previousState.getPlayerState();
+		}
 	}
 
 

@@ -18,17 +18,20 @@ import java.io.File;
 
 public class Player implements Moveable, Renderable {
 
-    private final Vector2D position;
+    private Vector2D position;
     private double health;
     private double velocity;
 
-    private final double width = 20;
-    private final double height = 20;
-    private final Image image;
+    private double width = 20;
+    private double height = 20;
+    private Image image;
     private ProjectileFactory playerProjectileFactory = new PlayerProjectileFactory();
+
+    private JSONObject pInfo;
 
 
     public Player(JSONObject playerInfo){
+        this.pInfo = playerInfo;
         int x = ((Long)((JSONObject)(playerInfo.get("position"))).get("x")).intValue();
         int y = ((Long)((JSONObject)(playerInfo.get("position"))).get("y")).intValue();
 
@@ -106,6 +109,21 @@ public class Player implements Moveable, Renderable {
     @Override
     public String getRenderableObjectName() {
         return "Player";
+    }
+
+    public Player cloneState() {
+        Player clonedPlayer = new Player(this.pInfo);
+        // Copy all the attributes of the current player to the cloned player
+        clonedPlayer.position = this.position;
+        clonedPlayer.health = this.health;
+        clonedPlayer.velocity = this.velocity;
+
+        clonedPlayer.width = this.width;
+        clonedPlayer.height = this.height;
+        clonedPlayer.image = this.image;
+        clonedPlayer.playerProjectileFactory = this.playerProjectileFactory;
+
+        return clonedPlayer;
     }
 
 }

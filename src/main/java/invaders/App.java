@@ -16,11 +16,12 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        GameSettings gameSettings = new GameSettings();
+
 
         GameEngine model = new GameEngine("src/main/resources/config_easy.json");
-        model.addObserver(gameSettings);
         GameWindow window = new GameWindow(model);
+        GameSettings gameSettings = new GameSettings(window.getScoreLabel(), window.getTimeLabel());
+        model.addObserver(gameSettings);
         model.setWindow(window);
         window.run();
 

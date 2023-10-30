@@ -1,6 +1,5 @@
 package invaders;
 
-import invaders.prototype.ConfigPrototype;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -9,7 +8,6 @@ import org.json.simple.parser.ParseException;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.sql.Statement;
 
 public class ConfigReader {
     private static JSONObject gameInfo;
@@ -43,15 +41,6 @@ public class ConfigReader {
 		}
     }
 
-    @Override
-    public ConfigPrototype clone() {
-        try {
-            return (ConfigPrototype) super.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
 
     public static JSONObject getGameInfo() {
         return gameInfo;

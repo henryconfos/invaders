@@ -1,5 +1,6 @@
 package invaders.engine;
 
+import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -7,6 +8,7 @@ import invaders.ConfigReader;
 import invaders.entities.EntityViewImpl;
 import invaders.entities.SpaceBackground;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
 import javafx.util.Duration;
 
 import invaders.entities.EntityView;
@@ -15,6 +17,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import org.json.simple.JSONObject;
 
 public class GameWindow {
@@ -25,6 +28,8 @@ public class GameWindow {
     private GameEngine model;
     private List<EntityView> entityViews =  new ArrayList<EntityView>();
     private Renderable background;
+    private Label scoreLabel;
+    private Label timeLabel;
 
     private double xViewportOffset = 0.0;
     private double yViewportOffset = 0.0;
@@ -43,6 +48,20 @@ public class GameWindow {
 
         scene.setOnKeyPressed(keyboardInputHandler::handlePressed);
         scene.setOnKeyReleased(keyboardInputHandler::handleReleased);
+
+        scoreLabel = new Label("Score: 0");
+        timeLabel = new Label("Time: 0:00");
+
+
+        pane.getChildren().add(scoreLabel);
+        pane.getChildren().add(timeLabel);
+        scoreLabel.setTextFill(Color.WHITE);
+        timeLabel.setTextFill(Color.WHITE);
+        scoreLabel.setLayoutX(10);
+        scoreLabel.setLayoutY(10);
+
+        timeLabel.setLayoutX(10);
+        timeLabel.setLayoutY(40);
 
     }
 
@@ -115,5 +134,13 @@ public class GameWindow {
 
     public void clearEV(){
         this.entityViews.clear();
+    }
+
+    public Label getScoreLabel() {
+        return scoreLabel;
+    }
+
+    public Label getTimeLabel() {
+        return timeLabel;
     }
 }

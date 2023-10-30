@@ -67,6 +67,10 @@ class KeyboardInputHandler {
         } else if (keyEvent.getCode().equals(KeyCode.H)) {
             model.setDifficulty("hard");
         }
+
+        if (keyEvent.getCode().equals(KeyCode.O)) {
+            model.undoState();
+        }
     }
 
     void handleReleased(KeyEvent keyEvent) {
