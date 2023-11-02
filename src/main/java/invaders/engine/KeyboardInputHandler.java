@@ -1,5 +1,9 @@
 package invaders.engine;
 
+import invaders.command.Command;
+import invaders.command.EasyDifficultyCommand;
+import invaders.command.HardDifficultyCommand;
+import invaders.command.MediumDifficultyCommand;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.media.Media;
@@ -16,6 +20,7 @@ class KeyboardInputHandler {
     private boolean left = false;
     private boolean right = false;
     private Set<KeyCode> pressedKeys = new HashSet<>();
+    private Map<KeyCode, Command> commandMap = new HashMap<>();
 
     private Map<String, MediaPlayer> sounds = new HashMap<>();
 
@@ -25,6 +30,10 @@ class KeyboardInputHandler {
         // TODO (longGoneUser): Is there a better place for this code?
         URL mediaUrl = getClass().getResource("/shoot.wav");
         String jumpURL = mediaUrl.toExternalForm();
+
+        commandMap.put(KeyCode.E, new EasyDifficultyCommand(model));
+        commandMap.put(KeyCode.M, new MediumDifficultyCommand(model));
+        commandMap.put(KeyCode.H, new HardDifficultyCommand(model));
 
         Media sound = new Media(jumpURL);
         MediaPlayer mediaPlayer = new MediaPlayer(sound);
@@ -60,12 +69,9 @@ class KeyboardInputHandler {
             model.rightPressed();
         }
 
-        if (keyEvent.getCode().equals(KeyCode.E)) {
-            model.setDifficulty("easy");
-        } else if (keyEvent.getCode().equals(KeyCode.M)) {
-            model.setDifficulty("medium");
-        } else if (keyEvent.getCode().equals(KeyCode.H)) {
-            model.setDifficulty("hard");
+        Command command = commandMap.get(keyEvent.getCode());
+        if (command != null) {
+            command.execute();
         }
 
         if (keyEvent.getCode().equals(KeyCode.O)) {

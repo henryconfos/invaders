@@ -244,6 +244,7 @@ public class GameEngine {
 	}
 
 	public void setDifficulty(String difficulty) {
+		System.out.println("here");
 		notifyObservers(difficulty);
 	}
 	private String formatTime(long millis) {
